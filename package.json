@@ -1,0 +1,23 @@
+{
+  "name": "redis-toolkit",
+  "version": "1.0.0",
+  "description": "A Redis SwissArmy knife toolkit",
+  "main": "rt.js",
+  "bin": {
+    "rt": "./bin/rt.js"
+  },
+  "preferGlobal": true,
+  "author": "binygreenberg",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^3.0.0",
+    "cli-progress": "^3.4.0",
+    "commander": "^4.0.1",
+    "redis": "^2.8.0",
+    "table": "^5.4.6"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-user/repo-url.git"
+  }
+}
