@@ -2,9 +2,6 @@
 
 Collection of some useful Redis tools. Currently `analyze` and `delete`
 
-## Contributions
-This being my first open source node project I'd really appreciate any feedback, PR's, or suggestions to improve this CLI 
-
 ## Install
 ```
 npm install -g redis-toolkit
@@ -12,7 +9,7 @@ npm install -g redis-toolkit
 
 ## Examples
 ```
-> rt analyze -s 10000 --patterns 'dfi:* sec:*'
+> rt analyze -s 100 --patterns 'dfi:* sec:*'
 ╔════════════╤═══════╤═════════╤═══════════════╤═════════╤═══════════╗
 ║ Key        │ Count │ % of DB │ Size in Bytes │ % of DB │ Mean Size ║
 ╟────────────┼───────┼─────────┼───────────────┼─────────┼───────────╢
@@ -52,20 +49,24 @@ delete command:
 ```
 
 #### `--host`
-Specifies Redis Host to connect to, default: localhost
+Specifies Redis Host to connect to. default: localhost
 #### `--port`
-Specifies Redis Port to connect to, default: 6379
+Specifies Redis Port to connect to. default: 6379
 ### `analyze` command
-Samples <--sample-size> keys matching <--patterns> option using [randomkey](https://redis.io/commands/randomkey)
-And measures the [size](https://redis.io/commands/memory-usage) of each pattern.   
+Samples <--sample-size> keys matching <--patterns> using [randomkey](https://redis.io/commands/randomkey)
+and measures the [size](https://redis.io/commands/memory-usage) of each pattern.   
 #### `--sample-size`
-Number of keys to sample. obviously the more keys the better the confidence level. 
+Number of keys to sample. Obviously the more keys the better the confidence level. 
 There are plenty of sample size calculator out there, [like this](https://www.surveymonkey.com/mp/sample-size-calculator/).
 #### `--batch-size`
 [see here](https://github.com/NodeRedis/node_redis) for more details. default: 100
 #### `--patterns`
-List of one or more key patterns to analyze. 
+List of one or more key patterns to analyze.
 ### `delete` command
-[Scans](https://redis.io/commands/scan) the DB and deletes the keys that match the pattern. The delete is done asynchronously using [unlinks](https://redis.io/commands/unlink).   
+[Scans](https://redis.io/commands/scan) the DB and deletes the keys that match the pattern. The delete is done asynchronously using [unlinks](https://redis.io/commands/unlink).
 #### `--batch-size`
 scans the DB <--batch-size> at a time. default: 10
+
+## Contributions
+This being my first open source node project I'd really appreciate any feedback, PR's, or suggestions to improve this CLI 😊
+
