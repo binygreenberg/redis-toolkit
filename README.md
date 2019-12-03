@@ -55,7 +55,7 @@ delete command:
 Specifies Redis Host to connect to, default: localhost
 #### `--port`
 Specifies Redis Port to connect to, default: 6379
-###`analyze` command
+### `analyze` command
 Samples <--sample-size> keys matching <--patterns> option using [randomkey](https://redis.io/commands/randomkey)
 And measures the [size](https://redis.io/commands/memory-usage) of each pattern.   
 #### `--sample-size`
@@ -65,7 +65,7 @@ There are plenty of sample size calculator out there, [like this](https://www.su
 [see here](https://github.com/NodeRedis/node_redis) for more details. default: 100
 #### `--patterns`
 List of one or more key patterns to analyze. 
-###`delete` command
+### `delete` command
 [Scans](https://redis.io/commands/scan) the DB and deletes the keys that match the pattern. The delete is done asynchronously using [unlinks](https://redis.io/commands/unlink).   
 #### `--batch-size`
 scans the DB <--batch-size> at a time. default: 10
