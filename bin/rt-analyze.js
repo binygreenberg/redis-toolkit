@@ -13,8 +13,8 @@ program
   .option('-h, --host <value>', 'redis host', 'localhost')
   .option('-p, --port <number>', 'redis port', 6379)
   .requiredOption('-s, --sample-size <number>', 'sample size', parseInt)
-  .option('-b, --batch-size <number>', 'batch size', 5)
-  .requiredOption('-r, --regex-list <value>', 'regular expressions', toRegex)
+  .requiredOption('--patterns <value>', 'list of key patterns to analyze', toRegex)
+  .option('-b, --batch-size <number>', 'batch size', 100)
   .parse(process.argv);
 
 // init module variables
@@ -27,6 +27,11 @@ const redisClient = redis.createClient(
     port: program.port,
   }
 );
+redisClient.on("error", function (err) {
+  console.log();
+  console.error(err);
+  process.exit(1);
+});
 
 async function runBatch() {
   const arrayRandomKey = new Array(program.batchSize).fill(['randomkey']);
@@ -43,7 +48,7 @@ async function runBatch() {
 
   repliesMemory.forEach((replyMemory, index) => {
     const key = repliesKeys[index];
-    const regexKey = program.regexList.find((regex) => regex.test(key)) || 'other keys';
+    const regexKey = program.patterns.find((regex) => regex.test(key)) || 'other keys';
     aggregatedResults[regexKey] = aggregatedResults[regexKey] || { count: 0, size: 0 };
     aggregatedResults[regexKey].count += 1;
     aggregatedResults[regexKey].size += replyMemory;
@@ -71,7 +76,7 @@ async function run() {
 
 function transformResultsToTable() {
   const totalKeys = numOfBatches * program.batchSize;
-  const headers = ['Key', 'Count', '% of sample count', 'Size in Bytes', '% of sample size', 'Mean Size'].map((value)=>chalk.bold(value));
+  const headers = ['Key', 'Count', '% of DB', 'Size in Bytes', '% of DB', 'Mean Size'].map((value)=>chalk.bold(value));
   const tableData = [headers];
   Object.keys(aggregatedResults).forEach((result) => {
     const row = [];
