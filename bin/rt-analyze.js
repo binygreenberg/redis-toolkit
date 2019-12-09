@@ -13,7 +13,7 @@ program
   .option('-h, --host <value>', 'redis host', 'localhost')
   .option('-p, --port <number>', 'redis port', 6379)
   .requiredOption('-s, --sample-size <number>', 'sample size', parseInt)
-  .requiredOption('--patterns <value>', 'list of key patterns to analyze', toRegex)
+  .option('--patterns <value>', 'list of key patterns to analyze', toRegex)
   .option('-b, --batch-size <number>', 'batch size', 100)
   .parse(process.argv);
 
@@ -48,7 +48,13 @@ async function runBatch() {
 
   repliesMemory.forEach((replyMemory, index) => {
     const key = repliesKeys[index];
-    const regexKey = program.patterns.find((regex) => regex.test(key)) || 'other keys';
+    let regexKey;
+    if (!program.patterns){
+      regexKey = key.split(':')[0];
+    } else {
+      regexKey = program.patterns.find((regex) => regex.test(key));
+    }
+    regexKey = regexKey || 'other keys';
     aggregatedResults[regexKey] = aggregatedResults[regexKey] || { count: 0, size: 0 };
     aggregatedResults[regexKey].count += 1;
     aggregatedResults[regexKey].size += replyMemory;

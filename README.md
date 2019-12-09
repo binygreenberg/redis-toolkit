@@ -61,7 +61,7 @@ There are plenty of sample size calculator out there, [like this](https://www.su
 #### `--batch-size`
 [see here](https://github.com/NodeRedis/node_redis) for more details. default: 100
 #### `--patterns`
-List of one or more key patterns to analyze.
+List of one or more key patterns to analyze. default: analyzes the pattern `key_prefix:* `
 ### `delete` command
 [Scans](https://redis.io/commands/scan) the DB and deletes the keys that match the pattern. The delete is done asynchronously using [unlinks](https://redis.io/commands/unlink).
 #### `--batch-size`
