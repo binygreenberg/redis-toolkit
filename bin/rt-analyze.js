@@ -56,12 +56,6 @@ async function runBatch() {
   });
 }
 
-function sleep(ms){
-  return new Promise(resolve=>{
-    setTimeout(resolve,ms)
-  })
-}
-
 async function run() {
   const progressBar = new cliProgress.Bar();
   progressBar.start(numOfBatches, 0);
@@ -70,7 +64,6 @@ async function run() {
     await runBatch();
     batchCount++;
     progressBar.update(batchCount);
-    await sleep(100);
   }
 }
 

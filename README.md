@@ -1,6 +1,6 @@
 # Redis Toolkit
 
-Collection of some useful Redis tools. Currently `analyze` and `delete`
+Collection of some useful Redis tools. Currently `analyze` and `delete`.  
 
 ## Install
 ```
@@ -9,13 +9,13 @@ npm install -g redis-toolkit
 
 ## Examples
 ```
-> rt analyze -s 100 --patterns 'dfi:* sec:*'
+> rt analyze -s 100 --patterns 'user:* client:*'
 ╔════════════╤═══════╤═════════╤═══════════════╤═════════╤═══════════╗
 ║ Key        │ Count │ % of DB │ Size in Bytes │ % of DB │ Mean Size ║
 ╟────────────┼───────┼─────────┼───────────────┼─────────┼───────────╢
-║ /dfi:*/    │ 81    │ 81.00   │ 14542         │ 40.17   │ 179.53    ║
+║ /user:*/   │ 81    │ 81.00   │ 14542         │ 40.17   │ 179.53    ║
 ╟────────────┼───────┼─────────┼───────────────┼─────────┼───────────╢
-║ /sec:*/    │ 8     │ 8.00    │ 530           │ 1.46    │ 66.25     ║
+║ /client:*/ │ 8     │ 8.00    │ 530           │ 1.46    │ 66.25     ║
 ╟────────────┼───────┼─────────┼───────────────┼─────────┼───────────╢
 ║ other keys │ 11    │ 11.00   │ 21131         │ 58.37   │ 1921.00   ║
 ╚════════════╧═══════╧═════════╧═══════════════╧═════════╧═══════════╝
@@ -37,9 +37,9 @@ global flags:
 
 analyze command:
   -s --sample-size : number
-    	Requests body file
+    	Number of keys to analyze
   -b --batch-size : number
-    	size 
+    	Size of batch (default: 100)
   --patterns : string
     	one or more key patterns to analyze
 

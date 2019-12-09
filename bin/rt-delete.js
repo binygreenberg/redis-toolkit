@@ -28,13 +28,6 @@ const unlinkAsync = promisify(redisClient.unlink).bind(redisClient);
 let countDeleted = 0;
 const DBSIZEAsync = promisify(redisClient.DBSIZE).bind(redisClient);
 
-
-function sleep(ms) {
-  return new Promise(resolve => {
-    setTimeout(resolve, ms)
-  })
-}
-
 async function run() {
   const dbSize = await DBSIZEAsync();
   const progressBar = new cliProgress.Bar({
@@ -53,7 +46,6 @@ async function run() {
         countDeleted += deleteSuccess;
       }
     }
-    await sleep(100);
     progressBar.increment(program.batchSize);
     progressBar.update(null, {deleted:countDeleted})
   }
