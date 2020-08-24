@@ -8,7 +8,7 @@ program
   .option('-h, --host <value>', 'redis host', 'localhost')
   .option('-p, --port <number>', 'redis port', 6379)
   .option('-b, --batch-size <number>', 'batch size', 1000)
-  .requiredOption('-p, --pattern <value>', 'pattern to delete')
+  .requiredOption('-p, --pattern <value>', 'pattern to search for')
   .parse(process.argv);
 
 // init module variables
@@ -24,14 +24,14 @@ redisClient.on("error", function(err) {
   process.exit(1);
 });
 const scanAsync = promisify(redisClient.scan).bind(redisClient);
-const unlinkAsync = promisify(redisClient.unlink).bind(redisClient);
-let countDeleted = 0;
 const DBSIZEAsync = promisify(redisClient.DBSIZE).bind(redisClient);
+let countFound = 0;
+const keysFound = [];
 
 async function run() {
   const dbSize = await DBSIZEAsync();
   const progressBar = new cliProgress.Bar({
-    format: 'progress [{bar}] DB scanned: {percentage}% || Keys deleted: {deleted}'
+    format: 'progress [{bar}] DB scanned: {percentage}% || Keys found: {found}'
   });
   progressBar.start(dbSize, 0);
   let cursor = 0;
@@ -41,22 +41,21 @@ async function run() {
     cursor = reply[0];
     const keys = reply[1];
     if (keys.length) {
-      const deleteSuccess = await unlinkAsync(keys);
-      if (deleteSuccess) {
-        countDeleted += deleteSuccess;
-      }
+      countFound += keys.length
+      keysFound.push(keys);
     }
     progressBar.increment(program.batchSize);
-    progressBar.update(null, {deleted:countDeleted})
+    progressBar.update(null, { found: countFound })
   }
 }
 
 run().then(() => {
   console.log();
-  if (!countDeleted){
+  if (!countFound) {
     console.log(`no keys matching pattern "${program.pattern}" found`);
   } else {
-    console.log(`successfully deleted ${countDeleted} keys matching pattern "${program.pattern}"`);
+    console.log(`successfully found ${countFound} keys matching pattern "${program.pattern}"`);
+    console.log(`keys: ${keysFound}`);
   }
   process.exit();
 }).catch(err => {

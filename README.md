@@ -35,7 +35,7 @@ global flags:
   -p --port : number
     	Redis Port (default 6379)
 
-analyze command:
+analyze command flags:
   -s --sample-size : number
     	Number of keys to analyze
   -b --batch-size : number
@@ -43,7 +43,11 @@ analyze command:
   --patterns : string
     	one or more key patterns to analyze
 
-delete command:
+delete command flags:
+  --pattern : pattern  
+        key pattern to delete
+
+search command flags:
   --pattern : pattern  
         key pattern to delete
 ```
@@ -59,13 +63,21 @@ and measures the [size](https://redis.io/commands/memory-usage) of each pattern.
 Number of keys to sample. Obviously the more keys the better the confidence level. 
 There are plenty of sample size calculator out there, [like this](https://www.surveymonkey.com/mp/sample-size-calculator/).
 #### `--batch-size`
-[see here](https://github.com/NodeRedis/node_redis) for more details. default: 100
+Uses the [redis client](https://github.com/NodeRedis/node_redis) batch command. default: 100
 #### `--patterns`
 List of one or more key patterns to analyze. default: analyzes the pattern `key_prefix:* `
 ### `delete` command
 [Scans](https://redis.io/commands/scan) the DB and deletes the keys that match the pattern. The delete is done asynchronously using [unlinks](https://redis.io/commands/unlink).
 #### `--batch-size`
-scans the DB <--batch-size> at a time. default: 10
+Scans the DB <--batch-size> at a time. default: 1000
+#### `--pattern`
+Pattern to find. 
+### `search` command
+[Scans](https://redis.io/commands/scan) the DB and finds the keys that match the pattern.
+#### `--batch-size`
+Scans the DB <--batch-size> at a time. default: 1000
+#### `--pattern`
+Pattern to find.
 
 ## Contributions
 This being my first open source node project I'd really appreciate any feedback, PR's, or suggestions to improve this CLI 😊
