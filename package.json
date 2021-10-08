@@ -1,6 +1,6 @@
 {
   "name": "redis-toolkit",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "A Redis SwissArmy knife toolkit",
   "main": "rt.js",
   "bin": {
@@ -10,11 +10,11 @@
   "author": "binygreenberg",
   "license": "MIT",
   "dependencies": {
-    "chalk": "^3.0.0",
-    "cli-progress": "^3.4.0",
-    "commander": "^4.0.1",
-    "redis": "^2.8.0",
-    "table": "^5.4.6"
+    "chalk": "^4.1.2",
+    "cli-progress": "^3.9.1",
+    "commander": "^8.2.0",
+    "redis": "^3.1.2",
+    "table": "^6.7.2"
   },
   "repository": {
     "type": "git",
@@ -23,5 +23,10 @@
   "keywords": [
     "redis",
     "tools"
-  ]
+  ],
+  "devDependencies": {
+    "eslint": "^7.32.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-plugin-import": "^2.24.2"
+  }
 }
