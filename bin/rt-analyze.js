@@ -17,6 +17,7 @@ function toInt(value) {
 program
   .option('-h, --host <value>', 'redis host', 'localhost')
   .option('-p, --port <number>', 'redis port', 6379)
+  .option('-a, --auth <value>', 'redis password')
   .requiredOption('-s, --sample-size <number>', 'sample size', toInt)
   .option('--patterns <value>', 'list of key patterns to analyze', toRegex)
   .option('-b, --batch-size <number>', 'batch size', 100)
@@ -32,6 +33,7 @@ const redisClient = redis.createClient(
   {
     host: opts.host,
     port: opts.port,
+    password: opts.auth,
   },
 );
 

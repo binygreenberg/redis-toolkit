@@ -10,6 +10,7 @@ const path = require('path');
 program
   .option('-h, --host <value>', 'redis host', 'localhost')
   .option('-p, --port <number>', 'redis port', 6379)
+  .option('-a, --auth <value>', 'redis password')
   .option('-b, --batch-size <number>', 'batch size', 1000)
   .requiredOption('--pattern <value>', 'pattern to search for')
   .option('-f, --file <path>', 'save list to file')
@@ -21,6 +22,7 @@ const redisClient = redis.createClient(
   {
     host: opts.host,
     port: opts.port,
+    password: opts.auth,
   },
 );
 

@@ -7,6 +7,7 @@ const program = require('commander');
 program
   .option('-h, --host <value>', 'redis host', 'localhost')
   .option('-p, --port <number>', 'redis port', 6379)
+  .option('-a, --auth <value>', 'redis password')
   .option('-b, --batch-size <number>', 'batch size', 1000)
   .requiredOption('--pattern <value>', 'pattern to delete')
   .parse(process.argv);
