@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 const redis = require('redis');
-const { promisify } = require('util');
 const cliProgress = require('cli-progress');
 const program = require('commander');
 
@@ -15,8 +14,10 @@ program
 const opts = program.opts();
 const redisClient = redis.createClient(
   {
-    host: opts.host,
-    port: opts.port,
+    socket: {
+      host: opts.host,
+      port: opts.port,
+    },
   },
 );
 
@@ -26,31 +27,30 @@ redisClient.on('error', (err) => {
   process.exit(1);
 });
 
-const scanAsync = promisify(redisClient.scan).bind(redisClient);
-const unlinkAsync = promisify(redisClient.unlink).bind(redisClient);
+// const scanAsync = promisify(redisClient.scan).bind(redisClient);
+// const unlinkAsync = promisify(redisClient.unlink).bind(redisClient);
 let countDeleted = 0;
-const DBSIZEAsync = promisify(redisClient.DBSIZE).bind(redisClient);
 
 async function run() {
-  const dbSize = await DBSIZEAsync();
+  await redisClient.connect();
+  const dbSize = await redisClient.dbSize();
   const progressBar = new cliProgress.Bar({
     format: 'progress [{bar}] DB scanned: {percentage}% || Keys scanned: {value} || Keys deleted: {deleted}',
   });
   progressBar.start(dbSize, 0, { deleted: 0 });
-  let cursor = '0';
-  // An iteration starts when the cursor is set to "0", and terminates when the cursor returned by the server is "0".
-  do {
-    const reply = await scanAsync(cursor, 'MATCH', opts.pattern, 'COUNT', opts.batchSize);
-    cursor = reply[0];
-    const keys = reply[1];
-    if (keys.length) {
-      const deleteSuccess = await unlinkAsync(keys);
-      if (deleteSuccess) {
-        countDeleted += deleteSuccess;
-      }
+  const scanOptions = {
+    MATCH: opts.pattern,
+    COUNT: opts.batchSize,
+  };
+  // eslint-disable-next-line no-restricted-syntax
+  for await (const key of redisClient.scanIterator(scanOptions)) {
+    const deleteSuccess = await redisClient.unlink(key);
+    if (deleteSuccess) {
+      countDeleted += deleteSuccess;
     }
-    progressBar.update(Math.min(opts.batchSize, dbSize), { deleted: countDeleted });
-  } while (cursor !== '0');
+    progressBar.update(deleteSuccess, { deleted: countDeleted });
+  }
+  await redisClient.quit();
 }
 
 run().then(() => {
