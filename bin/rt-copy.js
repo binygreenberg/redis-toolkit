@@ -3,8 +3,6 @@ const redis = require('redis');
 const cliProgress = require('cli-progress');
 const program = require('commander');
 const { commandOptions } = require('redis');
-// eslint-disable-next-line no-unused-vars
-const { drawBorderBottom } = require('table/dist/drawBorder');
 
 function toInt(value) {
   return parseInt(value, 10);
