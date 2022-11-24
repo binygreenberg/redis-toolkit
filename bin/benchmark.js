@@ -65,6 +65,7 @@ let countFound = 0;
 
 async function run(type, doWrite) {
   countFound = 0;
+  console.log();
   console.log(`Starting with ${type}`);
   const dbSize = await redisClient.dbSize();
   const progressBar = new cliProgress.Bar({
@@ -91,45 +92,51 @@ async function run(type, doWrite) {
   console.log(`Done with ${countFound}`);
   console.log(`Execution time of ${type}: ${end - start} ms`);
   console.timeEnd(`Execution Time ${type}`);
-  console.log();
+}
+
+async function flushAll() {
+  const promises = [redisClientOriginal, redisClientMsgPack, redisClientSet, redisClientSetPacked].map(async (client) => {
+    await client.connect();
+    await client.flushAll();
+    await client.memoryPurge();
+    await client.quit();
+  });
+  await Promise.all(promises);
 }
 
 async function runAll() {
   await redisClient.connect();
+  await flushAll();
 
   await redisClientOriginal.connect();
-  await redisClientOriginal.flushAll();
-  await run('original', (key, valPacked) => {
+  await run('original', async (key, valPacked) => {
     const saveValue = msgpack.pack(valPacked);
-    redisClientOriginal.set(key, saveValue);
+    await redisClientOriginal.set(key, saveValue);
   });
   await redisClientOriginal.quit();
 
   await redisClientMsgPack.connect();
-  await redisClientMsgPack.flushAll();
-  await run('msgpack', (key, valPacked) => {
+  await run('msgpack', async (key, valPacked) => {
     const arrayValue = valPacked.split('.')
       .map((a) => parseInt(a, 10));
     const saveValue = msgpack.pack(arrayValue);
-    redisClientMsgPack.set(key, saveValue);
+    await redisClientMsgPack.set(key, saveValue);
   });
   await redisClientMsgPack.quit();
 
   await redisClientSet.connect();
-  await redisClientSet.flushAll();
-  await run('set', (key, valPacked) => {
+  await run('set', async (key, valPacked) => {
     const arrayValue = valPacked.split('.')
       .map((a) => a.toString());
-    redisClientSet.sAdd(key, arrayValue);
+    await redisClientSet.sAdd(key, arrayValue);
   });
   await redisClientSet.quit();
 
   await redisClientSetPacked.connect();
-  await redisClientSetPacked.flushAll();
-  await run('setPacked', (key, valPacked) => {
+  await run('setPacked', async (key, valPacked) => {
     const arrayValue = valPacked.split('.')
       .map((a) => msgpack.pack(parseInt(a, 10)));
-    redisClientSetPacked.sAdd(key, arrayValue);
+    await redisClientSetPacked.sAdd(key, arrayValue);
   });
   await redisClientSetPacked.quit();
 

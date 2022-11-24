@@ -58,11 +58,12 @@ let countFound = 0;
 
 async function run(type, redisClient, doRead) {
   countFound = 0;
+  console.log();
   console.log(`Starting with ${type}`);
   const progressBar = new cliProgress.Bar({
     format: 'progress [{bar}] DB scanned: {percentage}% || Keys scanned: {value} || Keys found: {found}',
   });
-  progressBar.start(100000, 0, { found: 0 });
+  progressBar.start(101068, 0, { found: 0 });
   const batchSize = 10000;
   const scanOptions = {
     MATCH: '*',
@@ -81,7 +82,6 @@ async function run(type, redisClient, doRead) {
   console.log(`Done with ${countFound}`);
   console.log(`Execution time of ${type}: ${end - start} ms`);
   console.timeEnd(`Execution Time ${type}`);
-  console.log();
 }
 
 async function runAll() {
