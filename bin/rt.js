@@ -8,7 +8,5 @@ program
   .command('analyze', 'analyze memory usage')
   .command('delete', 'delete keys of specific pattern')
   .command('search', 'search for keys of specific pattern')
-  .command('msgpack', 'do msgpack of specific pattern')
-  .command('hset', 'save value as set')
-  .command('write', 'do write to another redis')
+  .command('copy', 'copy redis data by specific pattern')
   .parse(process.argv);
