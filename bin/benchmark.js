@@ -53,9 +53,7 @@ const redisClientSetPacked = redis.createClient(
   },
 );
 
-const redises = [redisClient, redisClientMsgPack, redisClientSetPacked, redisClientSet];
-
-redises.forEach((client) => {
+[redisClient, redisClientOriginal, redisClientMsgPack, redisClientSetPacked, redisClientSet].forEach((client) => {
   client.on('error', (err) => {
     console.log();
     console.error('error1', err);
@@ -100,6 +98,7 @@ async function runAll() {
   await redisClient.connect();
 
   await redisClientOriginal.connect();
+  await redisClientOriginal.flushAll();
   await run('original', (key, valPacked) => {
     const saveValue = msgpack.pack(valPacked);
     redisClientOriginal.set(key, saveValue);
@@ -107,6 +106,7 @@ async function runAll() {
   await redisClientOriginal.quit();
 
   await redisClientMsgPack.connect();
+  await redisClientMsgPack.flushAll();
   await run('msgpack', (key, valPacked) => {
     const arrayValue = valPacked.split('.')
       .map((a) => parseInt(a, 10));
@@ -116,6 +116,7 @@ async function runAll() {
   await redisClientMsgPack.quit();
 
   await redisClientSet.connect();
+  await redisClientSet.flushAll();
   await run('set', (key, valPacked) => {
     const arrayValue = valPacked.split('.')
       .map((a) => a.toString());
@@ -124,6 +125,7 @@ async function runAll() {
   await redisClientSet.quit();
 
   await redisClientSetPacked.connect();
+  await redisClientSetPacked.flushAll();
   await run('setPacked', (key, valPacked) => {
     const arrayValue = valPacked.split('.')
       .map((a) => msgpack.pack(parseInt(a, 10)));
