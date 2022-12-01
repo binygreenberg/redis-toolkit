@@ -62,32 +62,46 @@ const redisClientSetPacked = redis.createClient(
 });
 
 let countFound = 0;
+let data = [];
 
 async function run(type, doWrite) {
   countFound = 0;
   console.log();
   console.log(`Starting with ${type}`);
-  const dbSize = await redisClient.dbSize();
+  console.time(`Execution Time ${type}`);
+  const start = Date.now();
   const progressBar = new cliProgress.Bar({
     format: 'progress [{bar}] DB scanned: {percentage}% || Keys scanned: {value} || Keys found: {found}',
   });
-  progressBar.start(dbSize, 0, { found: 0 });
+  progressBar.start(data.length, 0, { found: 0 });
+
+  // eslint-disable-next-line no-restricted-syntax
+  // for await (const redisData of data) {
+  //   countFound += 1;
+  //   await doWrite(redisData.key, redisData.value);
+  //   progressBar.update(data.length, { found: countFound });
+  // }
+
+  await Promise.all(data.map((redisData) => {
+    countFound += 1;
+    progressBar.update(data.length, { found: countFound });
+    return doWrite(redisData.key, redisData.value);
+  }));
+
+  const end = Date.now();
+  console.log();
+  console.log(`Done with ${countFound}`);
+  console.log(`Execution time of ${type}: ${end - start} ms`);
+  console.timeEnd(`Execution Time ${type}`);
+}
+
+async function getData() {
   const batchSize = 10000;
   const scanOptions = {
     MATCH: '*',
     COUNT: batchSize,
   };
-  console.time(`Execution Time ${type}`);
-  const start = Date.now();
-  // eslint-disable-next-line no-restricted-syntax
-  // for await (const key of redisClient.scanIterator(scanOptions)) {
-  //   countFound += 1;
-  //   const value = await redisClient.get(commandOptions({ returnBuffers: true }), key);
-  //   const valPacked = msgpack.unpack(value);
-  //   doWrite(key, valPacked);
-  //   progressBar.update(1, { found: countFound });
-  // }
-
+  const redisValues = [];
   let cursor = '0';
   do {
     const reply = await redisClient.scan(cursor, scanOptions);
@@ -95,18 +109,15 @@ async function run(type, doWrite) {
     cursor = reply.cursor;
     const { keys } = reply;
     const values = await Promise.all(keys.map((key) => redisClient.get(commandOptions({ returnBuffers: true }), key)));
-    await Promise.all(values.map((value, index) => {
-      const valPacked = msgpack.unpack(value);
-      return doWrite(keys[index], valPacked);
-    }));
-    countFound += keys.length;
-    progressBar.update(Math.min(batchSize, dbSize), { found: countFound });
+    // eslint-disable-next-line no-loop-func
+    values.forEach((value, index) => {
+      redisValues.push({
+        key: keys[index],
+        value: msgpack.unpack(value),
+      });
+    });
   } while (cursor);
-  const end = Date.now();
-  console.log();
-  console.log(`Done with ${countFound}`);
-  console.log(`Execution time of ${type}: ${end - start} ms`);
-  console.timeEnd(`Execution Time ${type}`);
+  return redisValues;
 }
 
 async function flushAll() {
@@ -122,6 +133,7 @@ async function flushAll() {
 async function runAll() {
   await redisClient.connect();
   await flushAll();
+  data = await getData();
   // return;
 
   await redisClientOriginal.connect();
