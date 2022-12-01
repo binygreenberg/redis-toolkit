@@ -63,7 +63,8 @@ async function run(type, redisClient, doRead) {
   const progressBar = new cliProgress.Bar({
     format: 'progress [{bar}] DB scanned: {percentage}% || Keys scanned: {value} || Keys found: {found}',
   });
-  progressBar.start(101068, 0, { found: 0 });
+  const dbSize = await redisClient.dbSize();
+  progressBar.start(dbSize, 0, { found: 0 });
   const batchSize = 10000;
   const scanOptions = {
     MATCH: '*',
@@ -71,12 +72,24 @@ async function run(type, redisClient, doRead) {
   };
   console.time(`Execution Time ${type}`);
   const start = Date.now();
-  // eslint-disable-next-line no-restricted-syntax
-  for await (const key of redisClient.scanIterator(scanOptions)) {
-    countFound += 1;
-    await doRead(key);
-    progressBar.update(1, { found: countFound });
-  }
+  // // eslint-disable-next-line no-restricted-syntax
+  // for await (const key of redisClient.scanIterator(scanOptions)) {
+  //   countFound += 1;
+  //   await doRead(key);
+  //   progressBar.update(1, { found: countFound });
+  // }
+
+  let cursor = '0';
+  do {
+    const reply = await redisClient.scan(cursor, scanOptions);
+    // eslint-disable-next-line prefer-destructuring
+    cursor = reply.cursor;
+    const { keys } = reply;
+    await Promise.all(keys.map((key) => doRead(key)));
+    countFound += keys.length;
+    progressBar.update(Math.min(batchSize, dbSize), { found: countFound });
+  } while (cursor);
+
   const end = Date.now();
   console.log();
   console.log(`Done with ${countFound}`);

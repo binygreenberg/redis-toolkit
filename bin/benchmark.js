@@ -80,13 +80,28 @@ async function run(type, doWrite) {
   console.time(`Execution Time ${type}`);
   const start = Date.now();
   // eslint-disable-next-line no-restricted-syntax
-  for await (const key of redisClient.scanIterator(scanOptions)) {
-    countFound += 1;
-    const value = await redisClient.get(commandOptions({ returnBuffers: true }), key);
-    const valPacked = msgpack.unpack(value);
-    doWrite(key, valPacked);
-    progressBar.update(1, { found: countFound });
-  }
+  // for await (const key of redisClient.scanIterator(scanOptions)) {
+  //   countFound += 1;
+  //   const value = await redisClient.get(commandOptions({ returnBuffers: true }), key);
+  //   const valPacked = msgpack.unpack(value);
+  //   doWrite(key, valPacked);
+  //   progressBar.update(1, { found: countFound });
+  // }
+
+  let cursor = '0';
+  do {
+    const reply = await redisClient.scan(cursor, scanOptions);
+    // eslint-disable-next-line prefer-destructuring
+    cursor = reply.cursor;
+    const { keys } = reply;
+    const values = await Promise.all(keys.map((key) => redisClient.get(commandOptions({ returnBuffers: true }), key)));
+    await Promise.all(values.map((value, index) => {
+      const valPacked = msgpack.unpack(value);
+      return doWrite(keys[index], valPacked);
+    }));
+    countFound += keys.length;
+    progressBar.update(Math.min(batchSize, dbSize), { found: countFound });
+  } while (cursor);
   const end = Date.now();
   console.log();
   console.log(`Done with ${countFound}`);
@@ -107,6 +122,7 @@ async function flushAll() {
 async function runAll() {
   await redisClient.connect();
   await flushAll();
+  // return;
 
   await redisClientOriginal.connect();
   await run('original', async (key, valPacked) => {
@@ -126,17 +142,16 @@ async function runAll() {
 
   await redisClientSet.connect();
   await run('set', async (key, valPacked) => {
-    const arrayValue = valPacked.split('.')
-      .map((a) => a.toString());
-    await redisClientSet.sAdd(key, arrayValue);
+    const array = valPacked.split('.');
+    await redisClientSet.sAdd(key, array);
   });
   await redisClientSet.quit();
 
   await redisClientSetPacked.connect();
   await run('setPacked', async (key, valPacked) => {
-    const arrayValue = valPacked.split('.')
+    const array = valPacked.split('.')
       .map((a) => msgpack.pack(parseInt(a, 10)));
-    await redisClientSetPacked.sAdd(key, arrayValue);
+    await redisClientSetPacked.sAdd(key, array);
   });
   await redisClientSetPacked.quit();
 
