@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 const redis = require('redis');
-const { promisify } = require('util');
 const cliProgress = require('cli-progress');
 const program = require('commander');
 const chalk = require('chalk');
@@ -19,8 +18,10 @@ program
 const opts = program.opts();
 const redisClient = redis.createClient(
   {
-    host: opts.host,
-    port: opts.port,
+    socket: {
+      host: opts.host,
+      port: opts.port,
+    },
   },
 );
 
@@ -30,29 +31,28 @@ redisClient.on('error', (err) => {
   process.exit(1);
 });
 
-const scanAsync = promisify(redisClient.scan).bind(redisClient);
-const DBSIZEAsync = promisify(redisClient.DBSIZE).bind(redisClient);
 let countFound = 0;
 const keysFound = [];
 
 async function run() {
-  const dbSize = await DBSIZEAsync();
+  await redisClient.connect();
+  const dbSize = await redisClient.dbSize();
   const progressBar = new cliProgress.Bar({
     format: 'progress [{bar}] DB scanned: {percentage}% || Keys scanned: {value} || Keys found: {found}',
   });
-  progressBar.start(dbSize, 0, { found: 0 });
-  let cursor = '0';
+  progressBar.start(dbSize, 0, { deleted: 0 });
+  const scanOptions = {
+    MATCH: opts.pattern,
+    COUNT: opts.batchSize,
+  };
   // An iteration starts when the cursor is set to "0", and terminates when the cursor returned by the server is "0".
-  do {
-    const reply = await scanAsync(cursor, 'MATCH', opts.pattern, 'COUNT', opts.batchSize);
-    cursor = reply[0];
-    const keys = reply[1];
-    if (keys.length) {
-      countFound += keys.length;
-      keysFound.push(...keys);
-    }
-    progressBar.update(Math.min(opts.batchSize, dbSize), { found: countFound });
-  } while (cursor !== '0');
+  // eslint-disable-next-line no-restricted-syntax
+  for await (const key of redisClient.scanIterator(scanOptions)) {
+    keysFound.push(key);
+    countFound += 1;
+    progressBar.update(1, { found: countFound });
+  }
+  await redisClient.quit();
   keysFound.sort();
 }
 

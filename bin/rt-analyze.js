@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 const redis = require('redis');
-const { promisify } = require('util');
 const cliProgress = require('cli-progress');
 const program = require('commander');
 const { table } = require('table');
@@ -28,10 +27,13 @@ const numOfBatches = Math.floor(opts.sampleSize / opts.batchSize);
 let totalKeysSize = 0;
 const aggregatedResults = {};
 
+console.log(opts);
 const redisClient = redis.createClient(
   {
-    host: opts.host,
-    port: opts.port,
+    socket: {
+      host: opts.host,
+      port: opts.port,
+    },
   },
 );
 
@@ -42,15 +44,15 @@ redisClient.on('error', (err) => {
 });
 
 async function runBatch() {
-  const arrayRandomKey = new Array(opts.batchSize).fill(['RANDOMKEY']);
-  const batch = redisClient.batch(arrayRandomKey);
-  const execPromiseRandomKey = promisify(batch.exec).bind(batch);
-  const repliesKeys = await execPromiseRandomKey();
-
-  const memoryKeys = repliesKeys.map((reply) => ['MEMORY', 'USAGE', reply]);
-  const batchMemory = redisClient.batch(memoryKeys);
-  const execPromiseMemory = promisify(batch.exec).bind(batchMemory);
-  const repliesMemory = await execPromiseMemory();
+  await redisClient.connect();
+  const multi = redisClient.multi();
+  for (let i = 0; i < opts.batchSize; i += 1) {
+    multi.addCommand(['RANDOMKEY']);
+  }
+  const repliesKeys = await multi.exec();
+  const multiMemorySize = redisClient.multi();
+  repliesKeys.map((reply) => multiMemorySize.addCommand(['MEMORY', 'USAGE', reply]));
+  const repliesMemory = await multiMemorySize.exec();
 
   repliesMemory.forEach((replyMemory, index) => {
     const key = repliesKeys[index];
@@ -66,6 +68,7 @@ async function runBatch() {
     aggregatedResults[regexKey].size += replyMemory;
     totalKeysSize += replyMemory;
   });
+  await redisClient.quit();
 }
 
 async function run() {
